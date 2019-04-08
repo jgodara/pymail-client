@@ -7,7 +7,7 @@ __pycache__/
 .vscode/
 node_modules
 .sonarlint
-frontend/dist/*
+frontend/dist/main.js
 
 # C extensions
 *.so
