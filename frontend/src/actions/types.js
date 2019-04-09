@@ -1,0 +1,1 @@
+export const GET_EMAILS = "GET_EMAILS";

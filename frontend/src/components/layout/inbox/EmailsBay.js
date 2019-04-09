@@ -1,58 +1,21 @@
 import React, { Component } from 'react';
+import { connect } from "react-redux";
+import PropTypes from "prop-types";
+import { getAllEmails } from "../../../actions/emails"
 
 class EmailsBay extends Component {
-  state = {
-    emails: [
-      {
-        id: 1,
-        from: "Test From",
-        subject: "Test Email 1",
-        time: "9:27 AM",
-        hasAttachment: true,
-        read: true,
-        starred: false
-      },
-      {
-        id: 2,
-        from: "Test From",
-        subject: "Test Email 1",
-        time: "9:27 AM",
-        hasAttachment: false,
-        read: false,
-        starred: true
-      },
-      {
-        id: 3,
-        from: "Test From",
-        subject: "Test Email 1",
-        time: "9:27 AM",
-        hasAttachment: false,
-        read: false,
-        starred: false
-      },
-      {
-        id: 4,
-        from: "Test From",
-        subject: "Test Email 1",
-        time: "9:27 AM",
-        hasAttachment: true,
-        read: true,
-        starred: false
-      },
-      {
-        id: 5,
-        from: "Test From",
-        subject: "Test Email 1",
-        time: "9:27 AM",
-        hasAttachment: false,
-        read: true,
-        starred: false
-      },
-    ]
+
+  static propTypes = {
+    emails: PropTypes.array.isRequired,
+    getAllEmails: PropTypes.func.isRequired
   };
 
+  componentDidMount() {
+    this.props.getAllEmails()
+  }
+
   render() {
-    let emails = this.state.emails.map((email) => (
+    let emails = this.props.emails.map((email) => (
       <tr key={email.id} className={!email.read ? "unread" : ""}>
         <td className="inbox-small-cells">
           <input type="checkbox" className="mail-checkbox"/>
@@ -62,7 +25,7 @@ class EmailsBay extends Component {
         <td className="view-message ">{email.subject}</td>
         {email.hasAttachment ?
           <td className="view-message  inbox-small-cells"><i className="fa fa-paperclip"/></td>
-          : <td />
+          : <td/>
         }
         <td className="view-message  text-right">{email.time}</td>
       </tr>
@@ -77,4 +40,8 @@ class EmailsBay extends Component {
   }
 }
 
-export default EmailsBay;
+const mapStateToProps = state => ({
+  emails: state.emails.emails
+});
+
+export default connect(mapStateToProps, {getAllEmails})(EmailsBay);

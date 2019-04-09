@@ -1,5 +1,5 @@
 from sqlite_orm.table import BaseTable
-from sqlite_orm.field import IntegerField, TextField
+from sqlite_orm.field import IntegerField, TextField, BooleanField
 
 
 class Email(BaseTable):
@@ -8,6 +8,12 @@ class Email(BaseTable):
     id = IntegerField(primary_key=True, auto_increment=True)
     subject = TextField()
     content = TextField()
+    from_addr = TextField()
+    to_addr = TextField()
+    cc_addr = TextField()
+    has_attachment = BooleanField()
+    read = BooleanField()
+    starred = BooleanField()
 
 
 class Settings(BaseTable):
