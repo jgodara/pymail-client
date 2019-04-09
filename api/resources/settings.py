@@ -3,6 +3,7 @@ from flask_restful import Resource, reqparse
 from core.settings.user_settings import UserSettings
 
 from core.storage.models import Settings as SettingsModel
+import cryptutils
 
 parser = reqparse.RequestParser()
 parser.add_argument("email_address")
@@ -24,10 +25,10 @@ class Settings(Resource):
             self.error_code = "NO_MASTER_PASS"
         else:
             settings = {
-                "email_address": user_settings[1],
-                "user_password": user_settings[2],
-                "imap_server_url": user_settings[3],
-                "master_password": user_settings[4]
+                "email_address": cryptutils.decodestr(user_settings[1]),
+                "user_password": cryptutils.decodestr(user_settings[2]),
+                "imap_server_url": cryptutils.decodestr(user_settings[3]),
+                "master_password": cryptutils.decodestr(user_settings[4])
             }
             self.settings_object = settings
 
@@ -43,7 +44,7 @@ class Settings(Resource):
         for key in args:
             value = args[key]
             if value is not None:
-                kwargs[key] = value
+                kwargs[key] = cryptutils.encodestr(value)
 
         UserSettings().update_user_settings(**kwargs)
 

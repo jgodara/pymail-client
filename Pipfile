@@ -11,6 +11,7 @@ autopep8 = "*"
 flask = "*"
 flask-restful = "*"
 python-sqlite-orm = "*"
+pycrypto = "*"
 
 [requires]
 python_version = "3.6"
