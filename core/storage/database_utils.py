@@ -18,7 +18,7 @@ def initialize_database(db_name, models):
                 pass
 
 
-def database(db_name):
+def database(db_name) -> Database:
     database_path = f"{constants.work_dir}/{db_name}.db"
     create_file_if_needed(database_path)
     return Database(database_path)
