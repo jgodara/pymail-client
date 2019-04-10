@@ -6,7 +6,7 @@ A mailbox that can connect to your IMAP server, fetch emails and index them loca
 
 You need to have Python3 `pipenv` and `npm` installed.
 
-```shell
+```bash
 pip3 install pipenv
 git clone https://github.com/jgodara/pymail-client.git
 cd pymail-client
@@ -15,15 +15,22 @@ npm i
 
 Enter the pipenv shell and install all dependencies by
 
-```shell
+```bash
 pipenv shell
 pipenv install
 ```
 
 Run the server
 
-```shell
+```bash
 python mailbox.py
+```
+
+Configure Pymail Client to use your email (IMAP)
+
+```bash
+curl -X POST 'http://localhost:8080/api/settings' \
+ -d 'email_address=<youremail>&user_password=<yourpassword>&imap_server_url=<yoururl>&master_password=abcd'
 ```
 
 ## TODOs

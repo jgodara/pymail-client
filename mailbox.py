@@ -18,3 +18,4 @@ api.add_resource(Emails, '/api/emails')
 
 if __name__ == '__main__':
     app.run(port=8080)
+
