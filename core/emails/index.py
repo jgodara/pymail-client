@@ -1,6 +1,8 @@
+import asyncio
 import email
 import imaplib
 import random
+from threading import Thread
 
 import cryptutils
 from core.storage.database_utils import initialize_database, database
@@ -43,7 +45,8 @@ class EmailIndex:
                     self.emails.append(create_email(email))
             EmailIndex.__instance = self
 
-            self.process_emails()
+            email_index_thread = Thread(target=self.process_emails)
+            email_index_thread.start()
 
     def get_emails(self) -> [Email]:
         return self.emails
@@ -68,9 +71,6 @@ class EmailIndex:
 
                 for num in data[0].split():
                     _, data = im.fetch(num, "(RFC822)")
-
-                    if num.decode("utf-8") == "5":
-                        break
 
                     message = email.message_from_bytes(data[0][1])
                     header = email.header.make_header(email.header.decode_header(message["Subject"]))
