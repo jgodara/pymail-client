@@ -1,28 +1,11 @@
-import asyncio
 import email
 import imaplib
 import random
 from threading import Thread
 
 import cryptutils
-from core.storage.database_utils import initialize_database, database
 from core.storage.models import Email, Settings
-
-
-def create_email(email_row) -> Email:
-    email = Email()
-
-    email.id = email_row[0]
-    email.subject = email_row[1]
-    email.content = email_row[2]
-    email.from_addr = email_row[3]
-    email.to_addr = email_row[4]
-    email.cc_addr = email_row[5]
-    email.has_attachment = email_row[6]
-    email.read = email_row[7]
-    email.starred = email_row[8]
-
-    return email
+from core.storage.database import session as db
 
 
 class EmailIndex:
@@ -39,10 +22,6 @@ class EmailIndex:
 
     def __init__(self):
         if EmailIndex.__instance is None:
-            initialize_database("mailbox", [Email])
-            with database("mailbox") as db:
-                for email in db.query(Email).select().execute():
-                    self.emails.append(create_email(email))
             EmailIndex.__instance = self
 
             email_index_thread = Thread(target=self.process_emails)
@@ -52,35 +31,38 @@ class EmailIndex:
         return self.emails
 
     def process_emails(self):
-        with database("settings") as db:
-            for row in db.query(Settings).select().execute():
-                email_address = cryptutils.decodestr(row[1])
-                email_password = cryptutils.decodestr(row[2])
-                imap_url = cryptutils.decodestr(row[3])
+        settings = db.query(Settings).filter(Settings.id == 1)
+        if settings is None:
+            return
 
-                im = imaplib.IMAP4_SSL(imap_url)
-                try:
-                    rv, data = im.login(email_address, email_password)
-                except imaplib.IMAP4.error as err:
-                    print("Login Failed", err)
-                    exit(1)
+        email_address = cryptutils.decodestr(settings.email_address)
+        email_password = cryptutils.decodestr(settings.email_password)
+        imap_url = cryptutils.decodestr(settings.imap_url)
 
-                im.select("Inbox")
+        im = imaplib.IMAP4_SSL(imap_url)
+        try:
+            im.login(email_address, email_password)
+        except imaplib.IMAP4.error as err:
+            print("Login Failed", err)
+            exit(1)
 
-                _, data = im.search(None, "ALL")
+        im.select("Inbox")
 
-                for num in data[0].split():
-                    _, data = im.fetch(num, "(RFC822)")
+        _, data = im.search(None, "ALL")
 
-                    message = email.message_from_bytes(data[0][1])
-                    header = email.header.make_header(email.header.decode_header(message["Subject"]))
+        for num in data[0].split():
+            _, data = im.fetch(num, "(RFC822)")
 
-                    subject = str(header)
+            message = email.message_from_bytes(data[0][1])
+            header = email.header.make_header(email.header.decode_header(message["Subject"]))
 
-                    email_model = Email()
-                    email_model.subject = subject
-                    # email_model.content = message._payload[0]
+            subject = str(header)
 
-                    email_model.id = random.randint(100, 10000)
+            email_model = Email()
+            email_model.subject = subject
+            # TODO Email bodies
+            # email_model.content = message._payload[0]
 
-                    self.emails.append(email_model)
+            email_model.id = random.randint(100, 10000)
+
+            self.emails.append(email_model)

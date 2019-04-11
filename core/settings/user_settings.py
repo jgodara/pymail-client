@@ -1,31 +1,30 @@
-import core.storage.database_utils as db_utils
 from core.storage.models import Settings
+from core.storage.database import session as db
 
 
 class UserSettings:
     __database_name = "settings"
 
-    user_settings = None
-
-    def __init__(self):
-        db_utils.initialize_database(self.__database_name, [Settings])
-        with db_utils.database(self.__database_name) as db:
-            for settings in db.query(Settings).select().execute():
-                self.user_settings = settings
+    user_settings: Settings = None
 
     def get_user_settings(self):
-        return self.user_settings
+        return db.query(Settings).filter(Settings.id == 1).first()
 
     def update_user_settings(self, **kwargs):
-        for key in kwargs:
-            print(key)
-        with db_utils.database(self.__database_name) as db:
-            if self.user_settings is None:
-                settings = Settings()
-                for key in kwargs:
-                    settings.__setattr__(key, kwargs[key])
+        settings = self.user_settings
+        perform_create = False
 
-                settings.id = 1
-                db.query(Settings).insert(settings).execute()
-            else:
-                db.query(Settings).update(**kwargs).execute()
+        if settings is None:
+            settings = Settings()
+            settings.id = 1
+
+            perform_create = True
+        for key in kwargs:
+            value = kwargs[key]
+            if value:
+                settings.__setattr__(key, value)
+
+        if perform_create:
+            db.add(settings)
+
+        db.commit()

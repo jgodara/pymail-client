@@ -10,8 +10,8 @@ autopep8 = "*"
 [packages]
 flask = "*"
 flask-restful = "*"
-python-sqlite-orm = "*"
 pycrypto = "*"
+sqlalchemy = "*"
 
 [requires]
 python_version = "3"

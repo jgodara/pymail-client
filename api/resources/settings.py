@@ -24,17 +24,17 @@ class Settings(Resource):
             self.has_error = True
             self.error_code = "NO_MASTER_PASS"
         else:
-            settings = {
-                "email_address": cryptutils.decodestr(user_settings[1]),
-                "user_password": cryptutils.decodestr(user_settings[2]),
-                "imap_server_url": cryptutils.decodestr(user_settings[3]),
-                "master_password": cryptutils.decodestr(user_settings[4])
-            }
-            self.settings_object = settings
+            self.settings_object = user_settings
 
     def get(self):
         if not self.has_error:
-            return {"settings": self.settings_object}
+            settings = {
+                "email_address": self.settings_object.email_address,
+                "imap_server_url": self.settings_object.imap_server_url,
+                "master_password_set": True if self.settings_object.master_password else False,
+                "user_password_set": True if self.settings_object.user_password else False
+            }
+            return {"settings": settings}
 
         return {"success": False, "code": self.error_code}, 403
 

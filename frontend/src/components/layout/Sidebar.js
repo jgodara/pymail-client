@@ -1,5 +1,5 @@
 import React, { Component, Fragment } from 'react';
-import SidebarControls from "./sidebar/SidebarControls";
+import { SidebarControls } from "./sidebar/SidebarControls";
 import Labels from "./sidebar/Labels";
 
 class Sidebar extends Component {
