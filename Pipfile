@@ -12,6 +12,7 @@ flask = "*"
 flask-restful = "*"
 pycrypto = "*"
 sqlalchemy = "*"
+python-dateutil = "*"
 
 [requires]
 python_version = "3"
