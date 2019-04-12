@@ -1,9 +1,10 @@
+![GitHub](https://img.shields.io/github/license/jgodara/pymail-client.svg?color=RED&label=License&style=for-the-badge)
+
 # Pymail Client
 
 A mailbox that can connect to your IMAP server, fetch emails and index them locally.
 
 ## Installation/Running instructions
-
 You need to have Python3 `pipenv` and `npm` installed.
 
 ```bash
