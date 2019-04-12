@@ -19,7 +19,7 @@ class Emails(Resource):
                 "subject": email.subject,
                 "content": email.content,
                 "from": email.from_addr,
-                "time": "9:27 AM",
+                "time": email.received_date,
                 "hasAttachment": email.has_attachment,
                 "read": email.read,
                 "starred": email.starred

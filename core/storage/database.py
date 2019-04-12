@@ -5,13 +5,41 @@ import utils
 import constants
 from core.storage.models import Base as DeclarativeBase
 
-sqlite_file = f"sqlite:///{constants.work_dir}/pymail.db"
-utils.create_file_if_needed(sqlite_file)
+SQLITE_FILE = f"sqlite:///{constants.work_dir}/pymail.db"
+utils.create_file_if_needed(SQLITE_FILE)
 
-database_engine = create_engine(sqlite_file)
-DeclarativeBase.metadata.create_all(database_engine)
-DeclarativeBase.bind = database_engine
 
-session = sessionmaker()
-session.configure(bind=database_engine)
-session = session()
+class SessionFactoryPool:
+    """
+    This class provides easy methods to obtain the current open or an entirely
+    new database session.
+    """
+    current_session = None
+
+    @staticmethod
+    def get_current_session():
+        """
+        Returns the current active database session. Opens a new one if a
+        session isn't running.
+        :return: Current database session
+        """
+        if SessionFactoryPool.current_session is None:
+            session = SessionFactoryPool.create_new_session()
+            SessionFactoryPool.current_session = session
+
+        return SessionFactoryPool.current_session
+
+    @staticmethod
+    def create_new_session():
+        """
+        Creates a new database session.
+        :return: A new database session
+        """
+        database_engine = create_engine(SQLITE_FILE)
+        DeclarativeBase.metadata.create_all(database_engine)
+        DeclarativeBase.bind = database_engine
+
+        session = sessionmaker()
+        session.configure(bind=database_engine)
+
+        return session()

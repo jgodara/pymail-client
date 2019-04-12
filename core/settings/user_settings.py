@@ -1,14 +1,18 @@
 from core.storage.models import Settings
-from core.storage.database import session as db
+from core.storage.database import SessionFactoryPool
 
 
 class UserSettings:
     __database_name = "settings"
 
     user_settings: Settings = None
+    session = None
+
+    def __init__(self):
+        self.session = SessionFactoryPool.get_current_session()
 
     def get_user_settings(self):
-        return db.query(Settings).filter(Settings.id == 1).first()
+        return self.session.query(Settings).filter(Settings.id == 1).first()
 
     def update_user_settings(self, **kwargs):
         settings = self.user_settings
@@ -25,6 +29,6 @@ class UserSettings:
                 settings.__setattr__(key, value)
 
         if perform_create:
-            db.add(settings)
+            self.session.add(settings)
 
-        db.commit()
+        self.session.commit()

@@ -1,17 +1,80 @@
 import email
 import imaplib
-import random
-from threading import Thread
 
 import cryptutils
+from core.storage.database import SessionFactoryPool
 from core.storage.models import Email, Settings
-from core.storage.database import session as db
+
+
+def process_emails():
+    """
+    Thread that runs forever to read and index emails from the remote IMAP
+    server.
+    """
+    # Same database session cannot be used across multiple threads
+    session = SessionFactoryPool.create_new_session()
+    settings = session.query(Settings).filter(Settings.id == 1).first()
+
+    # Don't do anything if no email account is configured
+    # SEE https://github.com/jgodara/pymail-client for config instructions
+    if settings is None:
+        return
+
+    # Load basic IMAP account configuration
+    email_address = cryptutils.decodestr(settings.email_address)
+    email_password = cryptutils.decodestr(settings.user_password)
+
+    # Log into the remote IMAP Server
+    imap_login = imaplib.IMAP4_SSL(
+        cryptutils.decodestr(settings.imap_server_url))
+    try:
+        imap_login.login(email_address, email_password)
+    except imaplib.IMAP4.error as err:
+        print("Login Failed", err)
+        exit(1)
+
+    # TODO Read all folders
+    imap_login.select("Inbox")
+
+    _, data = imap_login.search(None, "ALL")
+
+    for num in data[0].split():
+        _, data = imap_login.fetch(num, "(RFC822)")
+
+        message = email.message_from_bytes(data[0][1])
+        message_headers = dict()
+        for key in message:
+            header = email.header.decode_header(message[key])
+            header_value = email.header.make_header(header)
+
+            message_headers[key.lower()] = str(header_value)
+
+        message_id = message_headers["message-id"]
+        email_model = session.query(Email).filter(
+            Email.id == message_id).first()
+        if email_model is None:
+            email_model = Email()
+            email_model.id = message_id
+            email_model.subject = message_headers["subject"]
+            email_model.received_date = message_headers["date"]
+            email_model.to_addr = message_headers["to"]
+            email_model.from_addr = message_headers["from"]
+            email_model.setting = settings
+            # TODO Email bodies
+            # email_model.content = message._payload[0]
+
+            try:
+                session.add(email_model)
+                session.commit()
+            except:
+                session.rollback()
+
+    # Close the session
+    session.close()
 
 
 class EmailIndex:
     __instance = None
-
-    emails: [Email] = []
 
     @staticmethod
     def get_instance():
@@ -24,45 +87,5 @@ class EmailIndex:
         if EmailIndex.__instance is None:
             EmailIndex.__instance = self
 
-            email_index_thread = Thread(target=self.process_emails)
-            email_index_thread.start()
-
     def get_emails(self) -> [Email]:
-        return self.emails
-
-    def process_emails(self):
-        settings = db.query(Settings).filter(Settings.id == 1)
-        if settings is None:
-            return
-
-        email_address = cryptutils.decodestr(settings.email_address)
-        email_password = cryptutils.decodestr(settings.email_password)
-        imap_url = cryptutils.decodestr(settings.imap_url)
-
-        im = imaplib.IMAP4_SSL(imap_url)
-        try:
-            im.login(email_address, email_password)
-        except imaplib.IMAP4.error as err:
-            print("Login Failed", err)
-            exit(1)
-
-        im.select("Inbox")
-
-        _, data = im.search(None, "ALL")
-
-        for num in data[0].split():
-            _, data = im.fetch(num, "(RFC822)")
-
-            message = email.message_from_bytes(data[0][1])
-            header = email.header.make_header(email.header.decode_header(message["Subject"]))
-
-            subject = str(header)
-
-            email_model = Email()
-            email_model.subject = subject
-            # TODO Email bodies
-            # email_model.content = message._payload[0]
-
-            email_model.id = random.randint(100, 10000)
-
-            self.emails.append(email_model)
+        return SessionFactoryPool.get_current_session().query(Email).all()
