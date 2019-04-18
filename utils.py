@@ -13,3 +13,7 @@ def create_file_if_needed(file_name):
         except OSError as ex:
             if ex.errno != errno.EEXIST:
                 raise
+
+
+def unquote_string(string: str) -> str:
+    return string.lstrip("\"").rstrip("\"")
